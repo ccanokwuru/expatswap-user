@@ -26,4 +26,4 @@ export type User = TypeOf<typeof insertUserSchema>;
 // Schema for selecting a user - can be used to validate API responses
 export const selectUserSchema = createSelectSchema(user);
 
-export type UserFilters = Partial<TypeOf<typeof selectUserSchema>>;
+export type UserFilters = { column: keyof User; direction: "asc" | "desc" };

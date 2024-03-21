@@ -3,7 +3,7 @@ import { countDistinct, eq, between } from "drizzle-orm";
 import { database } from "@/utils/database";
 import { PAGINATION } from "@/utils/database/constants";
 import { user } from "@/utils/database/schema";
-import { User, insertUserSchema } from "@/types";
+import { User, UserFilters } from "@/types";
 
 export const hashPassword = (password: string) => {
   const salt = randomBytes(21).toString("hex");
@@ -69,8 +69,8 @@ export const deleteUsers = async (id: number) => {
 
 export const getAllUsers = async (
   page = 1,
-  date?: { start: Date; end: Date },
-  order?: { column: keyof User; direction: "asc" | "desc" }
+  date?: { from: Date; to: Date },
+  order?: UserFilters
 ) => {
   try {
     return await database.transaction(async (tx) => {
@@ -97,7 +97,7 @@ export const getAllUsers = async (
                   : desc(user[order?.column ?? "createdAt"]),
               ],
               where: (user, { between }) =>
-                between(user.createdAt, date.start, date.end),
+                between(user.createdAt, date.from, date.to),
             })
             .prepare("get all users")
             .execute();
@@ -111,7 +111,7 @@ export const getAllUsers = async (
         : await tx
             .select({ total: countDistinct(user.id) })
             .from(user)
-            .where(between(user.createdAt, date.start, date.end))
+            .where(between(user.createdAt, date.from, date.to))
             .prepare("get total users count")
             .execute();
       const total = amount.map((e) => e.total).reduce((a, b) => a + b);
